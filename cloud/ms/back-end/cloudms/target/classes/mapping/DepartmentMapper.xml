@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.blade.ssm.dao.DepartmentDao">
+
+    <resultMap id="DepartmentFindResult" type="com.blade.ssm.model.Department">
+        <id property="id" column="dept_id" jdbcType="BIGINT"></id>
+        <result property="name" column="dept_name" jdbcType="VARCHAR"></result>
+        <result property="description" column="dept_description" jdbcType="VARCHAR"></result>
+    </resultMap>
+
+    <!-- ============================= INSERT ============================= -->
+    <insert id="save" useGeneratedKeys="true" keyProperty="id" >
+        INSERT INTO t_dept( dept_id,dept_name,dept_description )
+        VALUES ( #{id},#{name},#{description})
+    </insert>
+
+    <insert id="saveBatch">
+        INSERT INTO t_dept( dept_id,dept_name,dept_description )
+        <foreach collection="list" item="item" index="index" separator="UNION ALL">
+            SELECT  #{item.id},#{item.name},#{item.description}
+            FROM DUAL
+        </foreach>
+    </insert>
+
+    <!-- ============================= UPDATE ============================= -->
+    <update id="update">
+        UPDATE t_dept
+        <set>
+            dept_id=#{id},
+            dept_name=#{name},
+            dept_description=#{description},
+        </set>
+        WHERE dept_id=#{id}
+    </update>
+
+    <update id="updateIgnoreNull">
+        UPDATE t_dept
+        <set>
+            <if test="dept_id!= null">dept_id=#{id},</if>
+            <if test="dept_name!= null">dept_name=#{name},</if>
+            <if test="dept_description!= null">dept_description=#{description},</if>
+        </set>
+        WHERE dept_id=#{id}
+    </update>
+
+    <update id="updateBatch" parameterType="java.util.List">
+        <foreach collection="list" item="item" index="index"  separator=";">
+            UPDATE t_dept
+            <set>
+                dept_id=#{item.id},
+                dept_name=#{item.name},
+                dept_description=#{item.description},
+            </set>
+            WHERE dept_id=#{item.id}
+        </foreach>
+    </update>
+
+    <!-- ============================= DELETE ============================= -->
+    <delete id="delete">
+        DELETE FROM t_dept
+        WHERE dept_id=#{id}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM t_dept
+        WHERE
+        <foreach collection="list" item="item" index="index" open="(" separator="OR" close=")">
+            (dept_id=#{item.id} )
+        </foreach>
+    </delete>
+
+    <delete id="deleteByPK">
+        DELETE FROM t_dept
+        WHERE dept_id=#{id}
+    </delete>
+
+    <delete id="deleteAll">
+        DELETE FROM t_dept
+    </delete>
+
+    <!-- ============================= SELECT ============================= -->
+    <select id="count" resultType="java.lang.Long">
+        SELECT COUNT(1) FROM t_dept
+    </select>
+
+    <select id="findByPK" resultMap="DepartmentFindResult">
+        SELECT * FROM t_dept
+        WHERE dept_id=#{id}
+    </select>
+
+    <select id="find" resultMap="DepartmentFindResult">
+        SELECT  *
+        FROM t_dept
+        <where>
+            <if test="id!= null">
+                AND dept_id = #{id}
+            </if>
+            <if test="name!= null">
+                AND dept_name = #{name}
+            </if>
+            <if test="description!= null">
+                AND dept_description = #{description}
+            </if>
+        </where>
+    </select>
+
+</mapper>

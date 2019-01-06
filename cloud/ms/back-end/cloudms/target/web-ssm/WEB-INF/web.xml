@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+		  http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0">
+
+    <!-- 这个web.xml文件其实是面向Tomcat容器的，Tomcat解析请求，发放给web.xml -->
+    <!-- ssm中所有的xml都可以写成java文件的模式 -->
+    <!-- tomcat启动时会读取本文件的<listener>和<context-param> -->
+    <!-- 之后会通过listener创建上下文和servlet，然后将context-param写成键值对交给servlet，这个操作甚至比创建servlet项目都早 -->
+
+    <!-- 配置文件的模板肯定都是抄的，然后根据需求改改，这才是真正的开发流程 -->
+    <!-- 会改才是真的 -->
+    <!-- 这个配置启用了第二配置，指向classpath -->
+    <display-name>web-ssm</display-name>
+
+    <!-- 层次化的ApplicationContext -->
+    <!-- 也就是二级配置文件 -->
+    <!-- 这里的contextConfigLocation是全局配置，servlet里的那个其实是局部的，只针对那一个servlet-name -->
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:spring-mybatis.xml</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>log4jConfigLocation</param-name>
+        <param-value>classpath:log4j.properties</param-value>
+    </context-param>
+
+    <!-- 编码过滤器 -->
+    <filter>
+        <filter-name>encodingFilter</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>encodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- spring监听器 -->
+    <!-- 也是控制上下文的 -->
+    <!-- 监听类的，主要就是监控服务器的开闭 -->
+    <!-- 做一些初始化的内容添加工作、设置一些基本的内容、比如一些参数或者是一些固定的对象等等 -->
+    <!-- ContextLoaderListener的作用就是启动Web容器时，自动装配ApplicationContext.xml的配置信息 -->
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
+    <!-- 防止spring内存溢出监听器，比如quartz -->
+    <listener>
+        <listener-class>org.springframework.web.util.IntrospectorCleanupListener</listener-class>
+    </listener>
+
+
+    <!-- spring mvc servlet-->
+    <!-- 这个被称为servlet命名，必须出现在定制路由servlet-mapping前面 -->
+    <servlet><!-- 设置前端控制器，主要是向上，同时注册二级配置文件（面向下） -->
+        <!-- 这个名字是唯一的，因为可以有很多的servlet，需要结对辨识 -->
+        <servlet-name>SpringMVC</servlet-name><!-- 可以指定单个class，但是为了统一分配url，使用diapatcher做代理来分流 -->
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class><!-- 一个servlet绑定一个dispatcher -->
+        <init-param>
+            <!-- init-param称作定制化初始参数 -->
+            <param-name>contextConfigLocation</param-name><!-- 将二级配置文件作为参数注入 -->
+            <param-value>
+                classpath:spring-mvc.xml
+                <!--classpath:spring-mybatis.xml-->
+            </param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup><!-- 此处表示立即启动 -->
+        <async-supported>true</async-supported><!-- 异步支持 -->
+    </servlet>
+
+    <!-- 设置url解析器，分割url和后缀处理 -->
+    <!-- 符合规定的url会触发对应的servlet，这个地方需要注意斜杠补全问题 -->
+    <!-- 以“/”字符开头，并以“/*”结尾的字符串用于路径匹配 -->
+    <!-- 注意顺序 -->
+    <servlet-mapping>
+        <!-- 这里的servlet-name必须和之前注册的servlet一致 -->
+        <!-- 一个servlet允许配置多个url-pattern -->
+        <!-- servlet-name必须同名，不然绑定失败 -->
+        <servlet-name>SpringMVC</servlet-name>
+        <!-- 此处也可以配置成 *.do 形式，也就是过滤请求，只允许.do通过 -->
+        <!-- 这样写指示servlet只会匹配到/springmvc这样的路径型url，而不是index.jsp这样带后缀的 -->
+        <url-pattern>/</url-pattern>
+        <url-pattern>*.action</url-pattern>
+        <url-pattern>*.do</url-pattern>
+    </servlet-mapping>
+
+    <!-- 设置根目录访问首页，和控制器有竞争 -->
+    <welcome-file-list>
+        <!-- 可以有很多的欢迎页，顺序查询 -->
+        <welcome-file>/index.jsp</welcome-file>
+        <welcome-file>/index1.jsp</welcome-file>
+    </welcome-file-list>
+
+    <!-- session配置 -->
+    <session-config>
+        <!-- 定时15min过期 -->
+        <session-timeout>15</session-timeout>
+    </session-config>
+
+</web-app>

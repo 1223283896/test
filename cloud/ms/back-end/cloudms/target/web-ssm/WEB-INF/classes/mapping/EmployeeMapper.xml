@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC  "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.blade.ssm.dao.EmployeeDao">
+
+    <!-- ============================= RESULT ============================= -->
+    <resultMap id="EmployeeFindResult" type="com.blade.ssm.model.Employee">
+        <id column="emp_id" jdbcType="VARCHAR" property="empId"></id>
+        <result column="emp_name" jdbcType="VARCHAR" property="empName"></result>
+        <result column="sex" jdbcType="VARCHAR" property="sex"></result>
+        <result column="phone" jdbcType="VARCHAR" property="phone"></result>
+        <result column="email" jdbcType="VARCHAR" property="email"></result>
+        <result column="address" jdbcType="VARCHAR" property="address"></result>
+        <result column="education" jdbcType="VARCHAR" property="education"></result>
+        <result column="birthday" jdbcType="DATE" property="birthday"></result>
+        <result column="dept_id" jdbcType="BIGINT" property="deptId"></result>
+        <result column="pos_id" jdbcType="BIGINT" property="posId"></result>
+    </resultMap>
+
+    <!-- ============================= INSERT ============================= -->
+    <insert id="save" useGeneratedKeys="true" keyProperty="id" >
+        INSERT INTO t_employee( emp_id,emp_name,sex,phone,email,address,education,birthday,dept_id,pos_id )
+        VALUES ( #{empId},#{empName},#{sex},#{phone},#{email},#{address},#{education},#{birthday},#{deptId},#{posId})
+    </insert>
+
+    <insert id="saveBatch">
+        INSERT INTO t_employee( emp_id,emp_name,sex,phone,email,address,education,birthday,dept_id,pos_id )
+        <foreach collection="list" item="item" index="index" separator="UNION ALL">
+            SELECT  #{item.empId},#{item.empName},#{item.sex},#{item.phone},#{item.email},
+                    #{item.address},#{item.education},#{item.birthday},#{item.deptId},#{item.posId}
+            FROM DUAL
+        </foreach>
+    </insert>
+
+    <!-- ============================= UPDATE ============================= -->
+    <update id="update">
+        UPDATE t_employee
+        <set>
+            emp_id=#{empId},
+            emp_name=#{empName},
+            sex=#{sex},
+            phone=#{phone},
+            email=#{email},
+            address=#{address},
+            education=#{education},
+            birthday=#{birthday},
+            dept_id=#{deptId},
+            pos_id=#{posId},
+        </set>
+        WHERE emp_id=#{empId}
+    </update>
+
+    <update id="updateIgnoreNull">
+        UPDATE t_employee
+        <set>
+            <if test="empId!= null">emp_id=#{empId},</if>
+            <if test="empName!= null">emp_name=#{empName},</if>
+            <if test="sex!= null">sex=#{sex},</if>
+            <if test="phone!= null">phone=#{phone},</if>
+            <if test="email!= null">email=#{email},</if>
+            <if test="address!= null">address=#{address},</if>
+            <if test="education!= null">education=#{education},</if>
+            <if test="birthday!= null">birthday=#{birthday},</if>
+            <if test="deptId!= null">dept_id=#{deptId},</if>
+            <if test="posId!= null">pos_id=#{posId},</if>
+        </set>
+        WHERE emp_id=#{empId}
+    </update>
+
+    <update id="updateBatch" parameterType="java.util.List">
+        <foreach collection="list" item="item" index="index"  separator=";">
+            UPDATE t_employee
+            <set>
+                emp_id=#{item.empId},
+                emp_name=#{item.empName},
+                sex=#{item.sex},
+                phone=#{item.phone},
+                email=#{item.email},
+                address=#{item.address},
+                education=#{item.education},
+                birthday=#{item.birthday},
+                dept_id=#{item.deptId},
+                pos_id=#{item.posId},
+            </set>
+            WHERE emp_id=#{item.empId}
+        </foreach>
+    </update>
+
+    <!-- ============================= DELETE ============================= -->
+    <delete id="delete">
+        DELETE FROM t_employee
+        WHERE emp_id=#{empId}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM t_employee
+        WHERE
+        <foreach collection="list" item="item" index="index" open="(" separator="OR" close=")">
+            (emp_id=#{item.empId} )
+        </foreach>
+    </delete>
+
+    <delete id="deleteByPK">
+        DELETE FROM t_employee
+        WHERE emp_id=#{empId}
+    </delete>
+
+    <delete id="deleteAll">
+        DELETE FROM t_employee
+    </delete>
+
+    <!-- ============================= SELECT ============================= -->
+    <select id="count" resultType="java.lang.Long">
+        SELECT COUNT(1) FROM t_employee
+    </select>
+
+    <select id="findByPK" resultMap="EmployeeFindResult">
+        SELECT * FROM t_employee
+        WHERE emp_id=#{empId}
+    </select>
+
+    <select id="find" resultMap="EmployeeFindResult">
+        SELECT  *
+        FROM t_employee
+        <where>
+            <if test="empId!= null">
+                AND emp_id = #{empId}
+            </if>
+            <if test="empName!= null">
+                AND emp_name = #{empName}
+            </if>
+            <if test="sex!= null">
+                AND sex = #{sex}
+            </if>
+            <if test="phone!= null">
+                AND phone = #{phone}
+            </if>
+            <if test="email!= null">
+                AND email = #{email}
+            </if>
+            <if test="address!= null">
+                AND address = #{address}
+            </if>
+            <if test="education!= null">
+                AND education = #{education}
+            </if>
+            <if test="birthday!= null">
+                AND birthday = #{birthday}
+            </if>
+            <if test="deptId!= null">
+                AND dept_id = #{deptId}
+            </if>
+            <if test="posId!= null">
+                AND pos_id = #{posId}
+            </if>
+        </where>
+    </select>
+
+</mapper>

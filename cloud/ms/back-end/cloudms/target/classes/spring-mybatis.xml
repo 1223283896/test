@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+                        http://www.springframework.org/schema/context
+                        http://www.springframework.org/schema/context/spring-context-3.1.xsd
+                        http://www.springframework.org/schema/tx
+                        http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!-- 这个文件是整合Spring和MyBatis用的，也就是用application-bean控制mybatis行为 -->
+    <!-- 也就是所谓的Spring统筹mybatis和mvc，这里合并了mybatis-config.xml和application.xml -->
+
+    <!-- 自动扫描 -->
+    <!-- 或者说容器上下文扫描并自动注册bean -->
+    <!-- 这是二级文件的重要也是主要配置 -->
+    <context:component-scan base-package="com.blade.ssm"/>
+
+    <!-- 第一种方式：加载一个properties文件 -->
+    <!-- 这个文件在之后的注册中会用到 -->
+    <!-- 因为是通过Spring的方式整合mybatis，所以使用spring-bean.xml的方式，全部封装成类 -->
+    <!-- 原本原生mybatis-config.xml也只是存储信息，真正使用还是转换成成携带信息的java实例 -->
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="location" value="classpath:jdbc.properties"/>
+    </bean>
+
+
+    <!-- 第二种方式：加载多个properties文件
+    <bean id="configProperties" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
+        <property name="locations">
+            <list>
+                <value>classpath:jdbc.properties</value>
+                <value>classpath:common.properties</value>
+            </list>
+        </property>
+        <property name="fileEncoding" value="UTF-8"/>
+    </bean>
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer">
+        <property name="properties" ref="configProperties"/>
+    </bean>
+    -->
+
+    <!-- 配置数据源 -->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+          destroy-method="close">
+        <!-- 这里替代jdbc.properties文件中的信息，直接就在这里注册了 -->
+        <property name="driverClassName" value="${driverClasss}"/>
+        <property name="url" value="${jdbcUrl}"/>
+        <property name="username" value="${username}"/>
+        <property name="password" value="${password}"/>
+        <!-- 初始化连接大小 -->
+        <property name="initialSize" value="${initialSize}"></property>
+        <!-- 连接池最大数量 -->
+        <property name="maxActive" value="${maxActive}"></property>
+        <!-- 连接池最大空闲 -->
+        <property name="maxIdle" value="${maxIdle}"></property>
+        <!-- 连接池最小空闲 -->
+        <property name="minIdle" value="${minIdle}"></property>
+        <!-- 获取连接最大等待时间 -->
+        <property name="maxWait" value="${maxWait}"></property>
+    </bean>
+
+    <!-- mybatis和spring完美整合，不需要mybatis的配置映射文件 -->
+    <!-- 所有的代码都可以写成xml形式 -->
+    <!-- 这段代码借助spring注入到所有的dao中，就是一个创建SqlSessionFactoryBean的过程 -->
+    <!-- 原本应该写在代码里，但是现在写在xml中，可以少写很多繁琐的重复代码 -->
+    <!-- 这就是spring的IOC的魅力，所有程式都在上下文容器中，是平级的，而不是一条依赖链出去 -->
+    <!-- SqlSessionFactoryBuilder唯一作用就是加载xml，创建SqlSessionFactory来产出SqlSession -->
+    <!-- 在spring中，SqlSessionFactoryBean来替代SqlSessionFactoryBuilder来创建SqlSession -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- 这个属性对于SqlSessionFactoryBean来说是必须的 -->
+        <!-- dataSource指向的就是上面的那个jdbc的连接参数容器，本质是JavaBean -->
+        <property name="dataSource" ref="dataSource"/>
+        <!-- 自动扫描mapping.xml文件 -->
+        <!-- 根据扫描出来的xml，创建SqlSessionFactory，它随后会生成数据库会话实例 -->
+        <property name="mapperLocations" value="classpath:mapping/*.xml"></property>
+    </bean>
+
+    <!-- 这个配置必须和上面的SqlSessionFactoryBean一起用 -->
+    <!-- DAO接口所在包名，Spring会自动查找其下的类 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.blade.ssm.dao"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+    </bean>
+
+
+    <!-- (事务管理)transaction manager, use JtaTransactionManager for global tx -->
+    <!-- 事物就是涉及数据库操作的一系列动作的封装，包括回滚和关闭连接 -->
+    <!-- 这里的配置就是一键为项目里涉及数据库的操作生成一系列安全措施 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- (事务管理)transaction manager, use JtaTransactionManager for global tx -->
+    <!-- spring使用动态代理来实现ioc，不用接口就没有意义了 -->
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+</beans>

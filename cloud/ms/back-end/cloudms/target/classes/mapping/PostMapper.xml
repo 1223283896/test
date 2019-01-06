@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC  "-//mybatis.org//DTD Mapper 3.0//EN"  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.blade.ssm.dao.PostDao">
+
+    <!-- ============================= RESULT ============================= -->
+    <resultMap id="PostFindResult" type="com.blade.ssm.model.Post">
+        <id column="post_id" jdbcType="BIGINT" property="postId"></id>
+        <result column="title" jdbcType="VARCHAR" property="title"></result>
+        <result column="content" jdbcType="VARCHAR" property="content"></result>
+        <result column="admin_id" jdbcType="BIGINT" property="adminId"></result>
+        <result column="create_date" jdbcType="DATE" property="createDate"></result>
+    </resultMap>
+
+    <!-- ============================= INSERT ============================= -->
+    <insert id="save" useGeneratedKeys="true" keyProperty="id" >
+        INSERT INTO t_post( post_id,title,content,admin_id,create_date )
+        VALUES ( #{postId},#{title},#{content},#{adminId},#{createDate})
+    </insert>
+
+    <insert id="saveBatch">
+        INSERT INTO t_post( post_id,title,content,admin_id,create_date )
+        <foreach collection="list" item="item" index="index" separator="UNION ALL">
+            SELECT  #{item.postId},#{item.title},#{item.content},#{item.adminId},#{item.createDate}
+            FROM DUAL
+        </foreach>
+    </insert>
+
+    <!-- ============================= UPDATE ============================= -->
+    <update id="update">
+        UPDATE t_post
+        <set>
+            post_id=#{postId},
+            title=#{title},
+            content=#{content},
+            admin_id=#{adminId},
+            create_date=#{createDate},
+        </set>
+        WHERE post_id=#{postId}
+    </update>
+
+    <update id="updateIgnoreNull">
+        UPDATE t_post
+        <set>
+            <if test="postId!= null">post_id=#{postId},</if>
+            <if test="title!= null">title=#{title},</if>
+            <if test="content!= null">content=#{content},</if>
+            <if test="adminId!= null">admin_id=#{adminId},</if>
+            <if test="createDate!= null">create_date=#{createDate},</if>
+        </set>
+        WHERE post_id=#{postId}
+    </update>
+
+    <update id="updateBatch" parameterType="java.util.List">
+        <foreach collection="list" item="item" index="index"  separator=";">
+            UPDATE t_post
+            <set>
+                post_id=#{item.postId},
+                title=#{item.title},
+                content=#{item.content},
+                admin_id=#{item.adminId},
+                create_date=#{item.createDate},
+            </set>
+            WHERE post_id=#{item.postId}
+        </foreach>
+    </update>
+
+    <!-- ============================= DELETE ============================= -->
+    <delete id="delete">
+        DELETE FROM t_post
+        WHERE post_id=#{postId}
+    </delete>
+
+    <delete id="deleteBatch">
+        DELETE FROM t_post
+        WHERE
+        <foreach collection="list" item="item" index="index" open="(" separator="OR" close=")">
+            (post_id=#{item.postId} )
+        </foreach>
+    </delete>
+
+    <delete id="deleteByPK">
+        DELETE FROM t_post
+        WHERE post_id=#{postId}
+    </delete>
+
+    <delete id="deleteAll">
+        DELETE FROM t_post
+    </delete>
+
+    <!-- ============================= SELECT ============================= -->
+    <select id="count" resultType="java.lang.Long">
+        SELECT COUNT(1) FROM t_post
+    </select>
+
+    <select id="findByPK" resultMap="PostFindResult">
+    <!--<select id="findByPK" resultType="com.blade.ssm.model.Post">-->
+        SELECT * FROM t_post
+        WHERE post_id=#{postId}
+    </select>
+
+    <select id="find" resultMap="PostFindResult">
+    <!--<select id="find" resultType="com.blade.ssm.model.Post">-->
+        SELECT  *
+        FROM t_post
+        <where>
+            <if test="postId!= null">
+                AND post_id = #{postId}
+            </if>
+            <if test="title!= null">
+                AND title = #{title}
+            </if>
+            <if test="content!= null">
+                AND content = #{content}
+            </if>
+            <if test="adminId!= null">
+                AND admin_id = #{adminId}
+            </if>
+            <if test="createDate!= null">
+                AND create_date = #{createDate}
+            </if>
+        </where>
+    </select>
+
+</mapper>
